@@ -205,9 +205,7 @@ You can generate a 1 time API key then delete it when you are done using the too
       let selectedSubdomain = defaultSubdomain;
       
       if(domainInput !== ""){
-        // domainInput is validated on start, so we expect it to be in the correct format: subdomain.gaia.domains
         const customSubdomain = domainInput.split('.')[0];
-        // Alternate calls: odd calls use default, even calls use the custom domain.
         selectedSubdomain = (callIndex % 2 === 1) ? defaultSubdomain : customSubdomain;
       }
       
