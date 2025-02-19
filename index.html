@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gaianet User Points</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #ccc;
+      font-family: 'Courier New', Courier, monospace;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 { color: #fff; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .scoreboard {
+      background: #333;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    .scoreboard div { margin: 5px 0; }
+    .tooltip {
+      display: inline-block;
+      position: relative;
+      cursor: pointer;
+      border-bottom: 1px dotted #ccc;
+    }
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 300px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 5px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -150px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+    .terminal {
+      background: #000;
+      color: #0f0;
+      padding: 10px;
+      height: 200px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .controls { margin-bottom: 20px; }
+    .controls input[type="text"] {
+      padding: 5px;
+      border-radius: 3px;
+      border: 1px solid #555;
+      background: #222;
+      color: #ccc;
+    }
+    .controls input#apiKey { width: 300px; }
+    .controls input#domainInput { width: 250px; margin-left: 10px; }
+    .controls button {
+      padding: 5px 10px;
+      margin-left: 10px;
+      border-radius: 3px;
+      border: none;
+      background: #444;
+      color: #ccc;
+      cursor: pointer;
+    }
+    .controls button:hover { background: #555; }
+    .field-note {
+      font-size: 0.8em;
+      color: #aaa;
+      margin-top: 5px;
+    }
+    .apikey-info {
+      background: #222;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0 20px 0;
+    }
+    .apikey-info a { color: #66aaff; }
+    .note {
+      font-size: 0.8em;
+      color: #aaa;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #aaa;
+    }
+    footer svg {
+      width: 24px;
+      height: 24px;
+      fill: #aaa;
+      margin: 0 5px;
+      vertical-align: middle;
+    }
+    footer a { color: #aaa; text-decoration: none; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Gaianet User Points</h2>
+    <br>This is a simple >300 line tool meant to automate API calls, perfect for testing domain throughput across different domains on Gaianet. Everything is done in your browser, and you can verify the code using the github link below<br><br>
+    <div class="scoreboard">
+      <div>API Calls Sent: <span id="callsSent">0</span></div>
+      <div>Successful Calls: <span id="successCalls">0</span></div>
+      <div>Failed Calls: <span id="failedCalls">0</span></div>
+      <div>Elapsed Time: <span id="elapsedTime">0</span> seconds</div>
+      <div>Total Throughput: <span id="totalThroughput">0</span></div>
+      <div>
+        Estimated User Points: <span id="userPoints">0</span> Gaia Points
+        <span class="tooltip">[?]
+          <span class="tooltiptext">User Points are updated on the Gaianet Dashboard roughly every 4 hours.</span>
+        </span>
+      </div>
+    </div>
+    <div class="note">
+      Once you have started the script: Visit <a href="https://www.gaianet.ai/reward-summary" target="_blank">Gaia Credits</a> on the Gaianet Dashboard and ensure that your credits are being consumed. If your credits aren't being consumed, you are NOT earning points.
+    </div>
+    <div class="controls">
+      <input type="text" id="apiKey" placeholder="Enter your API key" />
+      <input type="text" id="domainInput" placeholder="Enter your domain (Optional)" />
+      <span class="tooltip">[?]
+        <span class="tooltiptext">Use format subdomain.gaia.domains; do not include http:// or https:// or anything else</span>
+      </span>
+      <div class="field-note">
+        The default domain is configured for high API calls whereas many custom domains are not. Leaving this blank may result in higher throughput. Entering a custom domain will alternate API calls with a high-throughput server to ensure stable token usage.
+      </div>
+      <button id="startBtn">Start</button>
+      <button id="stopBtn">Stop</button>
+    </div>
+    <div class="apikey-info">
+      To generate an API key, visit: 
+      <a href="https://www.gaianet.ai/setting/gaia-api-keys" target="_blank">https://www.gaianet.ai/setting/gaia-api-keys</a>
+      <br>
+      Be sure to top up your Gaia Credits. You can redeem points for credits here: 
+      <a href="https://www.gaianet.ai/reward-summary" target="_blank">https://www.gaianet.ai/reward-summary</a>
+      <br>
+      You can redeem 500 Credits every 24 hours.
+      <br>
+      This script takes approximately 2.5 hours to fully use up 500 credits.
+    </div>
+    <h3>Log Output</h3>
+    <div class="terminal" id="logTerminal"></div>
+    <h3>Query Output</h3>
+    <div class="terminal" id="queryTerminal"></div>
+  </div>
+  <footer>
+    <hr>
+    Created by Paj_ETH
+    <a href="https://twitter.com/paj_eth" target="_blank">
+      <svg viewBox="0 0 24 24">
+        <path d="M22.46 6c-.77.35-1.6.59-2.46.69a4.26 4.26 0 001.88-2.34 8.44 8.44 0 01-2.7 1.03 4.23 4.23 0 00-7.21 3.86A12 12 0 013 4.89a4.22 4.22 0 001.31 5.65 4.2 4.2 0 01-1.92-.53v.05a4.23 4.23 0 003.39 4.15 4.27 4.27 0 01-1.91.07 4.23 4.23 0 003.95 2.94A8.48 8.48 0 012 19.54 12 12 0 008.29 21c7.55 0 11.68-6.26 11.68-11.68 0-.18 0-.35-.01-.53A8.36 8.36 0 0022.46 6z"/>
+      </svg>
+    </a>
+    <a href="https://github.com/placeholder" target="_blank">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 0a12 12 0 00-3.79 23.4c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61a3.18 3.18 0 00-1.33-1.75c-1.09-.75.08-.74.08-.74a2.52 2.52 0 011.84 1.24 2.56 2.56 0 003.49 1 2.56 2.56 0 01.76-1.61c-2.67-.3-5.48-1.33-5.48-5.93a4.64 4.64 0 011.24-3.22 4.31 4.31 0 01.12-3.18s1-.32 3.3 1.23a11.39 11.39 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23a4.31 4.31 0 01.12 3.18 4.64 4.64 0 011.24 3.22c0 4.61-2.81 5.62-5.49 5.92a2.87 2.87 0 01.82 2.23v3.31c0 .32.22.69.82.58A12 12 0 0012 0z"/>
+      </svg>
+    </a>
+  </footer>
+  <script>
+    let intervalId = null, timerId = null, callIndex = 0;
+    let apiCallsSent = 0, successfulCalls = 0, failedCalls = 0, totalThroughput = 0;
+    let elapsedTime = 0;
+    function updateScoreboard() {
+      document.getElementById('callsSent').textContent = apiCallsSent;
+      document.getElementById('successCalls').textContent = successfulCalls;
+      document.getElementById('failedCalls').textContent = failedCalls;
+      document.getElementById('elapsedTime').textContent = elapsedTime;
+      document.getElementById('totalThroughput').textContent = totalThroughput;
+      document.getElementById('userPoints').textContent = (totalThroughput / 1000).toFixed(2);
+    }
+    function addLogLine(line) {
+      const terminal = document.getElementById('logTerminal');
+      const newLine = document.createElement('div');
+      newLine.textContent = line;
+      terminal.appendChild(newLine);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+    function addQueryLine(line) {
+      const terminal = document.getElementById('queryTerminal');
+      const newLine = document.createElement('div');
+      newLine.textContent = line;
+      terminal.appendChild(newLine);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+    function makeApiRequest(apiKey) {
+      callIndex++;
+      const defaultSubdomain = "drugs";
+      const domainInput = document.getElementById('domainInput').value.trim();
+      let selectedSubdomain = defaultSubdomain;
+      
+      if(domainInput !== ""){
+        // domainInput is validated on start, so we expect it to be in the correct format: subdomain.gaia.domains
+        const customSubdomain = domainInput.split('.')[0];
+        // Alternate calls: odd calls use default, even calls use the custom domain.
+        selectedSubdomain = (callIndex % 2 === 1) ? defaultSubdomain : customSubdomain;
+      }
+      
+      const fetchURL = `https://${selectedSubdomain}.gaia.domains/v1/chat/completions`;
+      fetch(fetchURL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: 'Where is Paris?' }
+          ]
+        })
+      })
+      .then(response => {
+        apiCallsSent++;
+        if (response.ok) {
+          return response.json().then(data => {
+            const throughput = data.usage && data.usage.total_tokens ? Number(data.usage.total_tokens) : 0;
+            successfulCalls++;
+            totalThroughput += throughput;
+            updateScoreboard();
+            addLogLine(`API Call Successful. Throughput: ${throughput}`);
+            const queryText = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content 
+                              ? data.choices[0].message.content 
+                              : '';
+            addQueryLine(queryText);
+          });
+        } else {
+          return response.text().then(text => {
+            failedCalls++;
+            updateScoreboard();
+            addLogLine(`API Call Failed: ${response.status} ${response.statusText}`);
+          });
+        }
+      })
+      .catch(error => {
+        apiCallsSent++;
+        failedCalls++;
+        updateScoreboard();
+        addLogLine(`API Call Failed: ${error.message}`);
+      });
+    }
+    document.getElementById('startBtn').addEventListener('click', () => {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey) { alert('Please enter your API key.'); return; }
+      const domainInput = document.getElementById('domainInput').value.trim();
+      if(domainInput !== "" && !/^[a-z0-9-]+\.gaia\.domains$/i.test(domainInput)) {
+        alert("Invalid domain format. Use format subdomain.gaia.domains; do not include http:// or https:// or anything else.");
+        return;
+      }
+      if (intervalId !== null) { clearInterval(intervalId); }
+      if (timerId !== null) { clearInterval(timerId); elapsedTime = 0; }
+      elapsedTime = 0;
+      timerId = setInterval(() => { elapsedTime++; updateScoreboard(); }, 1000);
+      makeApiRequest(apiKey);
+      intervalId = setInterval(() => { makeApiRequest(apiKey); }, 2000);
+    });
+    document.getElementById('stopBtn').addEventListener('click', () => {
+      if (intervalId !== null) { clearInterval(intervalId); intervalId = null; }
+      if (timerId !== null) { clearInterval(timerId); timerId = null; }
+      addLogLine('API calls stopped.');
+      document.getElementById('apiKey').value = "";
+      document.getElementById('apiKey').placeholder = "Enter a new API key";
+    });
+  </script>
+</body>
+</html>
