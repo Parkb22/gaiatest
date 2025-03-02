@@ -1,189 +1,304 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="dark">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gaianet User Points</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      background-color: #1e1e1e;
-      color: #ccc;
-      font-family: 'Courier New', Courier, monospace;
-      margin: 0;
-      padding: 20px;
-    }
-    h2 { color: #fff; }
-    .container { max-width: 800px; margin: 0 auto; }
-    .scoreboard {
-      background: #333;
-      padding: 10px;
-      margin-bottom: 20px;
-      border-radius: 5px;
-    }
-    .scoreboard div { margin: 5px 0; }
-    .tooltip {
-      display: inline-block;
-      position: relative;
-      cursor: pointer;
-      border-bottom: 1px dotted #ccc;
-    }
-    .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 300px;
-      background-color: #555;
-      color: #fff;
-      text-align: center;
-      border-radius: 5px;
-      padding: 5px;
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      margin-left: -150px;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
     .terminal {
-      background: #000;
+      background: #1a1a1a;
       color: #0f0;
       padding: 10px;
-      height: 200px;
+      height: 250px;
       overflow-y: auto;
       border: 1px solid #333;
       border-radius: 5px;
       margin-bottom: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      line-height: 1.2;
     }
-    .controls { margin-bottom: 20px; }
-    .controls input[type="text"] {
-      padding: 5px;
-      border-radius: 3px;
-      border: 1px solid #555;
-      background: #222;
-      color: #ccc;
+    
+    .terminal div {
+      margin-bottom: 2px;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
-    .controls input#apiKey { width: 300px; }
-    .controls input#domainInput { width: 250px; margin-left: 10px; }
-    .controls button {
-      padding: 5px 10px;
-      margin-left: 10px;
-      border-radius: 3px;
-      border: none;
-      background: #444;
-      color: #ccc;
-      cursor: pointer;
+    
+    /* Added animations and effects */
+    .animate-pulse-slow {
+      animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-    .controls button:hover { background: #555; }
-    .field-note {
-      font-size: 0.8em;
-      color: #aaa;
-      margin-top: 5px;
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
     }
-    .apikey-info {
-      background: #222;
-      padding: 10px;
-      border-radius: 5px;
-      margin: 10px 0 20px 0;
+    
+    .glow-effect {
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+      transition: all 0.3s ease;
     }
-    .apikey-info a { color: #66aaff; }
-    .note {
-      font-size: 0.8em;
-      color: #aaa;
-      margin-top: 10px;
-      margin-bottom: 20px;
+    
+    .glow-effect:hover {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
     }
-    footer {
-      text-align: center;
-      margin-top: 20px;
-      color: #aaa;
+    
+    .stat-value {
+      transition: all 0.3s ease;
     }
-    footer svg {
-      width: 24px;
-      height: 24px;
-      fill: #aaa;
-      margin: 0 5px;
-      vertical-align: middle;
+    
+    .btn {
+      transition: all 0.2s ease;
     }
-    footer a { color: #aaa; text-decoration: none; }
-    footer a:hover { color: #fff; }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .card {
+      transition: all 0.3s ease;
+    }
+    
+    .gradient-border {
+      position: relative;
+      border-radius: 0.5rem;
+    }
+    
+    .gradient-border::before {
+      content: "";
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #3b82f6, #10b981, #6366f1);
+      border-radius: 0.6rem;
+      z-index: -1;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 1023px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h2>Gaianet User Points</h2>
-    <br>This is a simple 1 page light-weight >300 line (including 100 lines of css loool) tool meant to automate API calls, perfect for testing domain throughput across different domains on Gaianet. Everything is done in your browser, and you can verify the code using the github link below<br><br>
-    <div class="scoreboard">
-      <div>API Calls Sent: <span id="callsSent">0</span></div>
-      <div>Successful Calls: <span id="successCalls">0</span></div>
-      <div>Failed Calls: <span id="failedCalls">0</span></div>
-      <div>Elapsed Time: <span id="elapsedTime">0</span> seconds</div>
-      <div>Total Throughput: <span id="totalThroughput">0</span></div>
-      <div>
-        Estimated User Points: <span id="userPoints">0</span> Gaia Points
-        <span class="tooltip">[?]
-          <span class="tooltiptext">User Points are updated on the Gaianet Dashboard roughly every 4 hours.</span>
-        </span>
+<body class="min-h-screen bg-gradient-to-b from-base-300 to-base-100">
+  <!-- Centered Navbar -->
+  <div class="navbar bg-base-300 shadow-lg">
+    <div class="container mx-auto max-w-6xl px-4">
+      <div class="flex justify-between w-full">
+        <div class="flex-1">
+          <div class="dropdown">
+            <label tabindex="0" class="btn btn-ghost lg:hidden">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
+              <li><a href="https://gaiadomains.xyz" target="_blank" rel="noopener noreferrer">Domains</a></li>
+              <li><a href="https://www.gaianet.ai/reward-summary" target="_blank" rel="noopener noreferrer">Rewards</a></li>
+            </ul>
+          </div>
+          <a class="btn btn-ghost normal-case text-xl">
+            <span class="text-primary font-bold">Gaia</span><span>net Points Tool</span>
+          </a>
+        </div>
+        
+        <div class="flex-none hidden lg:flex">
+          <ul class="menu menu-horizontal px-1">
+            <li><a href="https://gaiadomains.xyz" target="_blank" rel="noopener noreferrer" class="hover:text-primary">Domains</a></li>
+            <li><a href="https://www.gaianet.ai/reward-summary" target="_blank" rel="noopener noreferrer" class="hover:text-primary">Rewards</a></li>
+          </ul>
+        </div>
+        
+        <div class="flex-none">
+          <a class="btn btn-primary btn-sm glow-effect" href="https://github.com/Parkb22/gaiatest/tree/main" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" class="h-5 w-5 mr-1">
+              <path fill="currentColor" d="M12 0a12 12 0 00-3.79 23.4c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61a3.18 3.18 0 00-1.33-1.75c-1.09-.75.08-.74.08-.74a2.52 2.52 0 011.84 1.24a2.56 2.56 0 003.49 1a2.56 2.56 0 01.76-1.61c-2.67-.3-5.48-1.33-5.48-5.93a4.64 4.64 0 011.24-3.22a4.31 4.31 0 01.12-3.18s1-.32 3.3 1.23a11.39 11.39 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23a4.31 4.31 0 01.12 3.18a4.64 4.64 0 011.24 3.22c0 4.61-2.81 5.62-5.49 5.92a2.87 2.87 0 01.82 2.23v3.31c0 .32.22.69.82.58A12 12 0 0012 0z"/>
+            </svg>
+            GitHub
+          </a>
+        </div>
       </div>
     </div>
-    <div class="note">
-      ⚠️Once you have started the script: Visit <a href="https://www.gaianet.ai/reward-summary" target="_blank">Gaia Credits</a> on the Gaianet Dashboard and ensure that your credits are being consumed. If your credits aren't being consumed, you are NOT earning points⚠️
-    </div>
-    <div class="controls">
-      <input type="text" id="apiKey" placeholder="Enter your API key" />
-      <input type="text" id="domainInput" placeholder="Enter your domain (Optional)" />
-      <span class="tooltip">[?]
-        <span class="tooltiptext">Use format subdomain.gaia.domains; do not include http:// or https:// or anything else</span>
-      </span><br>
-      <div class="field-note">
-        The default domain is configured for high API calls whereas many custom domains are not. Leaving this blank will provide maximum throughput. Entering a custom domain will alternate API calls with a high-throughput domain to ensure consistent token usage.
-      </div><br>
-      <button id="startBtn">Start</button>
-      <button id="stopBtn">Stop</button>
-    </div>
-    <div class="apikey-info">
-You can generate a 1 time API key then delete it when you are done using the tool.
-<br><br>
-      To generate an API key visit: <br>
-      <a href="https://www.gaianet.ai/setting/gaia-api-keys" target="_blank">https://www.gaianet.ai/setting/gaia-api-keys</a>
-      <br>
-      Be sure to top up your Gaia Credits. <br>You can redeem points for credits here: <br>
-      <a href="https://www.gaianet.ai/reward-summary" target="_blank">https://www.gaianet.ai/reward-summary</a>
-      <br><br>
-      You can redeem 500 Credits every 24 hours.
-      <br>
-      This script takes approximately 2.5 hours to fully use up 500 credits.
-<br> It is recommended to run this tool once every day to ensure maximum points<br>
-    </div>
-    <h3>Log Output</h3>
-    <div class="terminal" id="logTerminal"></div>
-    <h3>Query Output</h3>
-    <div class="terminal" id="queryTerminal"></div>
   </div>
-  <footer>
-    <hr>
-    Created by Paj_ETH
-    <a href="https://twitter.com/paj_eth" target="_blank">
-      <svg viewBox="0 0 24 24">
-        <path d="M22.46 6c-.77.35-1.6.59-2.46.69a4.26 4.26 0 001.88-2.34 8.44 8.44 0 01-2.7 1.03 4.23 4.23 0 00-7.21 3.86A12 12 0 013 4.89a4.22 4.22 0 001.31 5.65 4.2 4.2 0 01-1.92-.53v.05a4.23 4.23 0 003.39 4.15 4.27 4.27 0 01-1.91.07 4.23 4.23 0 003.95 2.94A8.48 8.48 0 012 19.54 12 12 0 008.29 21c7.55 0 11.68-6.26 11.68-11.68 0-.18 0-.35-.01-.53A8.36 8.36 0 0022.46 6z"/>
-      </svg>
-    </a>
-    <a href="https://github.com/Parkb22/gaiatest/tree/main" target="_blank">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 0a12 12 0 00-3.79 23.4c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61a3.18 3.18 0 00-1.33-1.75c-1.09-.75.08-.74.08-.74a2.52 2.52 0 011.84 1.24 2.56 2.56 0 003.49 1 2.56 2.56 0 01.76-1.61c-2.67-.3-5.48-1.33-5.48-5.93a4.64 4.64 0 011.24-3.22 4.31 4.31 0 01.12-3.18s1-.32 3.3 1.23a11.39 11.39 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23a4.31 4.31 0 01.12 3.18 4.64 4.64 0 011.24 3.22c0 4.61-2.81 5.62-5.49 5.92a2.87 2.87 0 01.82 2.23v3.31c0 .32.22.69.82.58A12 12 0 0012 0z"/>
-      </svg>
-    </a>
+
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- Dashboard Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 dashboard-grid">
+      <!-- Left Column - Controls and Info -->
+      <div class="lg:col-span-2">
+        <div class="card bg-base-200 shadow-xl mb-6 gradient-border">
+          <div class="card-body">
+            <h2 class="card-title text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Gaianet User Points</h2>
+            <p class="mb-4">This tool automates API calls to test domain throughput across different domains on Gaianet. Everything is done in your browser, and you can verify the code using the GitHub link above.</p>
+            
+            <div class="stats shadow mb-6 bg-base-300 rounded-xl overflow-hidden">
+              <div class="stat">
+                <div class="stat-title">API Calls</div>
+                <div class="stat-value" id="callsSent">0</div>
+              </div>
+              
+              <div class="stat">
+                <div class="stat-title">Success</div>
+                <div class="stat-value text-success" id="successCalls">0</div>
+              </div>
+              
+              <div class="stat">
+                <div class="stat-title">Failed</div>
+                <div class="stat-value text-error" id="failedCalls">0</div>
+              </div>
+              
+              <div class="stat">
+                <div class="stat-title">Time</div>
+                <div class="stat-value" id="elapsedTime">0s</div>
+              </div>
+              
+              <div class="stat">
+                <div class="stat-title">Throughput</div>
+                <div class="stat-value" id="totalThroughput">0</div>
+              </div>
+              
+              <div class="stat">
+                <div class="stat-title">Gaia Points</div>
+                <div class="stat-value text-primary animate-pulse-slow" id="userPoints">0</div>
+                <div class="stat-desc">Updated every ~4 hours</div>
+              </div>
+            </div>
+            
+            <div class="alert alert-warning mb-6 shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <span>Once you have started the script: Visit <a href="https://www.gaianet.ai/reward-summary" target="_blank" rel="noopener noreferrer" class="link link-primary font-bold">Gaia Credits</a> on the Gaianet Dashboard and ensure that your credits are being consumed. If your credits aren't being consumed, you are NOT earning points!</span>
+            </div>
+            
+            <div class="form-control mb-6 p-4 bg-base-300 rounded-xl shadow-inner">
+              <label class="label">
+                <span class="label-text font-semibold">API Key</span>
+              </label>
+              <input type="text" id="apiKey" placeholder="Enter your API key" class="input input-bordered w-full focus:border-primary" />
+              
+              <label class="label mt-2">
+                <span class="label-text font-semibold">Domain (Optional)</span>
+                <span class="label-text-alt tooltip tooltip-left" data-tip="Use format subdomain.gaia.domains; do not include http:// or https:// or anything else">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-4 h-4 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </span>
+              </label>
+              <input type="text" id="domainInput" placeholder="Enter your domain (Optional)" class="input input-bordered w-full focus:border-primary" />
+              <div class="text-xs text-base-content/70 mt-1">
+                The default domain is configured for high API calls whereas many custom domains are not. Leaving this blank will provide maximum throughput. Entering a custom domain will alternate API calls with a high-throughput domain to ensure consistent token usage.
+              </div>
+              
+              <div class="flex gap-4 mt-6">
+                <button id="startBtn" class="btn btn-primary flex-1 shadow-lg hover:shadow-primary/50">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Start
+                </button>
+                <button id="stopBtn" class="btn btn-error flex-1 shadow-lg hover:shadow-error/50">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                  </svg>
+                  Stop
+                </button>
+              </div>
+            </div>
+            
+            <div class="card bg-base-300 shadow-lg">
+              <div class="card-body">
+                <h3 class="card-title text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">API Key Information</h3>
+                <p>You can generate a 1 time API key then delete it when you are done using the tool.</p>
+                <p class="mt-2">To generate an API key visit:</p>
+                <a href="https://www.gaianet.ai/setting/gaia-api-keys" target="_blank" rel="noopener noreferrer" class="link link-primary">https://www.gaianet.ai/setting/gaia-api-keys</a>
+                
+                <p class="mt-2">Be sure to top up your Gaia Credits. You can redeem points for credits here:</p>
+                <a href="https://www.gaianet.ai/reward-summary" target="_blank" rel="noopener noreferrer" class="link link-primary">https://www.gaianet.ai/reward-summary</a>
+                
+                <div class="alert alert-info mt-4 shadow-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <div>
+                    <div class="font-bold">Important Information</div>
+                    <div class="text-sm">You can redeem 500 Credits every 24 hours. This script takes approximately 7 hours to fully use up 500 credits with the 5-second interval. It is recommended to run this tool once every day to ensure maximum points.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column - Terminals -->
+      <div class="lg:col-span-1">
+        <div class="card bg-base-200 shadow-xl h-full gradient-border">
+          <div class="card-body">
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Log Output
+                <span class="ml-auto text-xs opacity-70">(Compact View)</span>
+              </h3>
+              <div class="terminal rounded-lg shadow-inner" id="logTerminal"></div>
+            </div>
+            
+            <div>
+              <h3 class="text-lg font-semibold mb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Query Output
+                <span class="ml-auto text-xs opacity-70">(Compact View)</span>
+              </h3>
+              <div class="terminal rounded-lg shadow-inner" id="queryTerminal"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer footer-center p-4 bg-base-300 text-base-content mt-8">
+    <div>
+      <p>Created by Paj_ETH</p>
+      <div class="flex gap-2 justify-center mt-2">
+        <a href="https://twitter.com/paj_eth" target="_blank" rel="noopener noreferrer" class="btn btn-circle btn-ghost btn-sm hover:bg-base-200">
+          <svg viewBox="0 0 24 24" class="h-5 w-5 fill-current">
+            <path d="M22.46 6c-.77.35-1.6.59-2.46.69a4.26 4.26 0 001.88-2.34 8.44 8.44 0 01-2.7 1.03a4.23 4.23 0 00-7.21 3.86A12 12 0 013 4.89a4.22 4.22 0 001.31 5.65a4.2 4.2 0 01-1.92-.53v.05a4.23 4.23 0 003.39 4.15a4.27 4.27 0 01-1.91.07a4.23 4.23 0 003.95 2.94A8.48 8.48 0 012 19.54A12 12 0 008.29 21c7.55 0 11.68-6.26 11.68-11.68 0-.18 0-.35-.01-.53A8.36 8.36 0 0022.46 6z"/>
+          </svg>
+        </a>
+        <a href="https://github.com/Parkb22/gaiatest/tree/main" target="_blank" rel="noopener noreferrer" class="btn btn-circle btn-ghost btn-sm hover:bg-base-200">
+          <svg viewBox="0 0 24 24" class="h-5 w-5 fill-current">
+            <path d="M12 0a12 12 0 00-3.79 23.4c.6.11.82-.26.82-.58v-2.04c-3.34.73-4.04-1.61-4.04-1.61a3.18 3.18 0 00-1.33-1.75c-1.09-.75.08-.74.08-.74a2.52 2.52 0 011.84 1.24a2.56 2.56 0 003.49 1a2.56 2.56 0 01.76-1.61c-2.67-.3-5.48-1.33-5.48-5.93a4.64 4.64 0 011.24-3.22a4.31 4.31 0 01.12-3.18s1-.32 3.3 1.23a11.39 11.39 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23a4.31 4.31 0 01.12 3.18a4.64 4.64 0 011.24 3.22c0 4.61-2.81 5.62-5.49 5.92a2.87 2.87 0 01.82 2.23v3.31c0 .32.22.69.82.58A12 12 0 0012 0z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
   </footer>
+  
   <script>
     let intervalId = null, timerId = null, callIndex = 0;
     let apiCallsSent = 0, successfulCalls = 0, failedCalls = 0, totalThroughput = 0;
     let elapsedTime = 0;
+    
     function updateScoreboard() {
       document.getElementById('callsSent').textContent = apiCallsSent;
       document.getElementById('successCalls').textContent = successfulCalls;
       document.getElementById('failedCalls').textContent = failedCalls;
-      document.getElementById('elapsedTime').textContent = elapsedTime;
+      document.getElementById('elapsedTime').textContent = elapsedTime + 's';
       document.getElementById('totalThroughput').textContent = totalThroughput;
       document.getElementById('userPoints').textContent = (totalThroughput / 1000).toFixed(2);
     }
+    
     function addLogLine(line) {
       const terminal = document.getElementById('logTerminal');
       const newLine = document.createElement('div');
@@ -191,6 +306,7 @@ You can generate a 1 time API key then delete it when you are done using the too
       terminal.appendChild(newLine);
       terminal.scrollTop = terminal.scrollHeight;
     }
+    
     function addQueryLine(line) {
       const terminal = document.getElementById('queryTerminal');
       const newLine = document.createElement('div');
@@ -198,6 +314,7 @@ You can generate a 1 time API key then delete it when you are done using the too
       terminal.appendChild(newLine);
       terminal.scrollTop = terminal.scrollHeight;
     }
+    
     function makeApiRequest(apiKey) {
       callIndex++;
       const defaultSubdomain = "drugs";
@@ -247,27 +364,38 @@ You can generate a 1 time API key then delete it when you are done using the too
         }
       })
       .catch(error => {
-        apiCallsSent++;
         failedCalls++;
         updateScoreboard();
         addLogLine(`API Call Failed: ${error.message}`);
       });
     }
+    
     document.getElementById('startBtn').addEventListener('click', () => {
       const apiKey = document.getElementById('apiKey').value.trim();
-      if (!apiKey) { alert('Please enter your API key.'); return; }
+      if (!apiKey) { 
+        alert('Please enter your API key.'); 
+        return; 
+      }
+      
       const domainInput = document.getElementById('domainInput').value.trim();
       if(domainInput !== "" && !/^[a-z0-9-]+\.gaia\.domains$/i.test(domainInput)) {
         alert("Invalid domain format. Use format subdomain.gaia.domains; do not include http:// or https:// or anything else.");
         return;
       }
+      
       if (intervalId !== null) { clearInterval(intervalId); }
       if (timerId !== null) { clearInterval(timerId); elapsedTime = 0; }
+      
       elapsedTime = 0;
       timerId = setInterval(() => { elapsedTime++; updateScoreboard(); }, 1000);
+      
       makeApiRequest(apiKey);
-      intervalId = setInterval(() => { makeApiRequest(apiKey); }, 2000);
+      // Changed from 2000ms (2 seconds) to 5000ms (5 seconds) per API call
+      intervalId = setInterval(() => { makeApiRequest(apiKey); }, 5000);
+      
+      addLogLine('API calls started with 5-second interval.');
     });
+    
     document.getElementById('stopBtn').addEventListener('click', () => {
       if (intervalId !== null) { clearInterval(intervalId); intervalId = null; }
       if (timerId !== null) { clearInterval(timerId); timerId = null; }
